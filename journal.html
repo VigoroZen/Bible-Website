@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Secure Encrypted Journal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <style>
+    :root {
+      --bg: #f4f4f4;
+      --text: #333;
+      --card: #fff;
+      --accent: orange;
+      --danger: crimson;
+    }
+    body.dark {
+      --bg: #1e1e1e;
+      --text: #eee;
+      --card: #2c2c2c;
+      --accent: #ff9800;
+      --danger: #ff4d4d;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 1em;
+      background: var(--bg);
+      color: var(--text);
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+      transition: background 0.3s, color 0.3s;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    input, textarea, button {
+      width: 100%;
+      margin: 0.5em 0;
+      padding: 0.6em;
+      font-size: 1em;
+      box-sizing: border-box;
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: darkorange;
+    }
+    #journalList li {
+      margin: 0.5em 0;
+      padding: 0.5em;
+      background: var(--card);
+      border: 1px solid #ccc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .journal-name {
+      color: #007BFF;
+      cursor: pointer;
+      text-decoration: underline;
+      flex: 1;
+    }
+    .timestamp {
+      font-size: 0.9em;
+      color: #666;
+      margin-left: 1em;
+    }
+    .delete-btn {
+      background-color: var(--danger);
+      color: white;
+      border: none;
+      padding: 0.3em 0.6em;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    #status {
+      margin-top: 1em;
+      font-weight: bold;
+      text-align: center;
+    }
+    #strengthMeter {
+      height: 10px;
+      background: #ddd;
+      border-radius: 5px;
+      margin-top: -0.5em;
+      margin-bottom: 0.5em;
+      overflow: hidden;
+    }
+    #strengthBar {
+      height: 100%;
+      width: 0%;
+      background: red;
+      transition: width 0.3s;
+    }
+    #darkToggle {
+      margin: 1em auto;
+      display: block;
+      width: fit-content;
+    }
+    @media (max-width: 600px) {
+      body {
+        margin: 0.5em;
+      }
+      .timestamp {
+        margin-left: 0;
+        margin-top: 0.5em;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Your Journal</h1>
+  <button onclick="location.href= 'page2.html'">Tutus Version</button>
+ 
+  <button id="darkToggle" onclick="toggleDarkMode()">Dark/Light Mode</button>
+
+  <label for="journalName">Journal Name:</label>
+  <input type="text" id="journalName" placeholder="e.g. About Today">
+
+  <label for="email">Recovery Email (optional but recommended):</label>
+  <input type="email" id="email" placeholder="example@example.com">
+
+  <label for="password">Password:</label>
+  <input type="password" id="password" placeholder="Enter a custom encryption password" oninput="checkStrength(this.value)">
+  <div id="strengthMeter"><div id="strengthBar"></div></div>
+
+  <label for="journal">Journal Entry:</label>
+  <textarea id="journal" rows="10" placeholder="Write your memories of the great love of God here..."></textarea>
+
+  <button onclick="saveJournal()">💾 Save Journal</button>
+  <button onclick="exportJournal()">📤 Export to File</button>
+  <button onclick="recoverPassword()">❓ I forgot my password</button>
+  <div id="status"></div>
+
+  <h2>📚 Saved Journals</h2>
+  <ul id="journalList"></ul>
+    <script>
+    function saveJournal() {
+      const name = document.getElementById('journalName').value.trim();
+      const pass = document.getElementById('password').value;
+      const text = document.getElementById('journal').value;
+      const email = document.getElementById('email').value.trim();
+
+      if (!name || !pass || !text) {
+        alert('Please fill in journal name, password, and entry.');
+        return;
+      }
+
+      const encrypted = CryptoJS.AES.encrypt(text, pass).toString();
+      localStorage.setItem('journal_' + name, encrypted);
+      localStorage.setItem('journal_' + name + '_timestamp', new Date().toISOString());
+      if (email) {
+        localStorage.setItem('journal_' + name + '_email', email);
+        localStorage.setItem('journal_' + name + '_password', pass);
+      }
+      document.getElementById('status').textContent = `✅ Saved journal "${name}" securely.`;
+      updateJournalList();
+    }
+
+    function updateJournalList() {
+      const list = document.getElementById('journalList');
+      list.innerHTML = '';
+      const keys = Object.keys(localStorage).filter(key => key.startsWith('journal_') && !key.endsWith('_timestamp') && !key.endsWith('_email') && !key.endsWith('_password'));
+
+      keys.forEach(key => {
+        const name = key.replace('journal_', '');
+        const timestamp = localStorage.getItem('journal_' + name + '_timestamp');
+        const item = document.createElement('li');
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = name;
+        nameSpan.className = 'journal-name';
+        nameSpan.onclick = () => openJournal(name);
+
+        const timeSpan = document.createElement('span');
+        timeSpan.textContent = `🕒 ${new Date(timestamp).toLocaleString()}`;
+        timeSpan.className = 'timestamp';
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.onclick = () => deleteJournal(name);
+
+        item.appendChild(nameSpan);
+        item.appendChild(timeSpan);
+        item.appendChild(deleteBtn);
+        list.appendChild(item);
+      });
+    }
+
+    function openJournal(name) {
+      const pass = prompt(`Enter password to open "${name}"`);
+      if (!pass) return;
+
+      const encrypted = localStorage.getItem('journal_' + name);
+      try {
+        const decrypted = CryptoJS.AES.decrypt(encrypted, pass).toString(CryptoJS.enc.Utf8);
+        if (!decrypted) throw new Error();
+        document.getElementById('journalName').value = name;
+        document.getElementById('password').value = pass;
+        document.getElementById('journal').value = decrypted;
+        document.getElementById('email').value = localStorage.getItem('journal_' + name + '_email') || '';
+        document.getElementById('status').textContent = `📖 Opened journal "${name}"`;
+        checkStrength(pass);
+      } catch {
+        alert('❌ Incorrect password or corrupted journal.');
+      }
+    }
+
+    function deleteJournal(name) {
+      const pass = prompt(`Enter password to delete "${name}"`);
+      if (!pass) return;
+
+      const encrypted = localStorage.getItem('journal_' + name);
+      try {
+        const decrypted = CryptoJS.AES.decrypt(encrypted, pass).toString(CryptoJS.enc.Utf8);
+        if (!decrypted) throw new Error();
+
+        if (confirm(`Are you sure you want to permanently delete "${name}"?`)) {
+          localStorage.removeItem('journal_' + name);
+          localStorage.removeItem('journal_' + name + '_timestamp');
+          localStorage.removeItem('journal_' + name + '_email');
+          localStorage.removeItem('journal_' + name + '_password');
+          updateJournalList();
+          document.getElementById('status').textContent = `🗑️ Deleted journal "${name}".`;
+        }
+      } catch {
+        alert('❌ Incorrect password. Journal not deleted.');
+      }
+    }
+
+    function exportJournal() {
+      const name = document.getElementById('journalName').value.trim();
+      const text = document.getElementById('journal').value;
+      if (!name || !text) {
+        alert('Please open a journal first.');
+        return;
+      }
+      const blob = new Blob([text], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = name + '.txt';
+      link.click();
+    }
+
+    function recoverPassword() {
+      const name = prompt('Enter the journal name you forgot the password for:');
+      if (!name) return;
+      const storedEmail = localStorage.getItem('journal_' + name + '_email');
+      const storedPass = localStorage.getItem('journal_' + name + '_password');
+      if (storedEmail && storedPass) {
+        alert(`Password recovery:\nJournal: ${name}\nEmail: ${storedEmail}\nPassword: ${storedPass}`);
+      } else {
+        alert('❌ No recovery info found for this journal.');
+      }
+    }
+
+    function checkStrength(pass) {
+      const bar = document.getElementById('strengthBar');
+      let strength = 0;
+      if (pass.length >= 8) strength += 1;
+      if (/[A-Z]/.test(pass)) strength += 1;
+      if (/[0-9]/.test(pass)) strength += 1;
+      if (/[^A-Za-z0-9]/.test(pass)) strength += 1;
+
+      bar.style.width = (strength * 25) + '%';
+      bar.style.background = ['red', 'orange', 'gold', 'green'][strength - 1] || 'red';
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark');
+    }
+
+    updateJournalList();
+  </script>
+   <button onclick="location.href='index.html'"> Go Back To Home Page</button>
+</body>
+</html>
