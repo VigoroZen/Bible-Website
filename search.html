@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset ="uff-8"/>
+        <meta name = "viewport" content = "width = device-width, initial-scale = 1.0"/>
+        <link href = "styles.css" rel = "stylesheet">
+        <title> Bible Search </title>
+    <title>Bible Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 2em;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #333;
+        }
+        input, button {
+            padding: 0.5em;
+            margin: 0.5em 0;
+            font-size: 1em;
+        }
+        #result {
+            margin-top: 1em;
+            padding: 1em;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+        }
+        #reference {
+          width: 80%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="title">Bible Verse Search</h1>
+    <p id="subtitle">Enter a verse reference</p><p id="subtitle"> (e.g., <strong>John 3:16</strong>)</p>
+    <input type="text" id="reference" placeholder="John 3:16">
+    <button onclick="searchBible()">Search</button>
+
+    <div id="result"></div>
+
+    <script>
+        async function searchBible() {
+            const ref = document.getElementById("reference").value.trim();
+            const resultDiv = document.getElementById("result");
+            resultDiv.innerHTML = "Searching...";
+
+            try {
+                const response = await fetch(`https://bible-api.com/${encodeURIComponent(ref)}`);
+                const data = await response.json();
+
+                if (data.text) {
+                    resultDiv.innerHTML = `
+                        <h2>${data.reference}</h2>
+                        <p>${data.text}</p>
+                        <p><em>${data.translation_name}</em></p>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<p>No verse found for "${ref}".</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p>Error fetching verse. Please try again.</p>`;
+                console.error(error);
+            }
+        }
+    </script>
+    <button onclick="href='index.html'">Go Back To Home Page</button>
+</body>
+</html>
