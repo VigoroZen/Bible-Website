@@ -7,6 +7,11 @@
         <title> The Bible Web </title>
     </head>
     <main>
+<div id="cookie-banner">
+    <p>This website uses cookies for storage. By continuing, you accept this use.</p>
+    <button onclick="acceptCookies()">OK</button>
+</div>
+
         <h1 id="title"> The Bible Web </h1>
         <h2 id="subtitle"> Read God's Word Daily</h2> 
         <div class="topnav">
@@ -19,4 +24,17 @@
     <footer>
  <p>© Christian Software Developers</p>
     </footer>
+<script>
+function acceptCookies() {
+    document.cookie = "cookiesAccepted=true; path=/; max-age=31536000"; // 1 year
+    document.getElementById("cookie-banner").style.display = "none";
+}
+
+window.onload = function() {
+    if (document.cookie.includes("cookiesAccepted=true")) {
+        document.getElementById("cookie-banner").style.display = "none";
+    }
+};
+</script>
+
 </html>
