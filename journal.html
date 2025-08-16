@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Your Journal</title>
+  <title>Secure Encrypted Journal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <style>
@@ -20,38 +20,6 @@
       --accent: #ff9800;
       --danger: #ff4d4d;
     }
-body.blocked {
-    overflow: hidden;
-    pointer-events: none;
-    opacity: 0.3;
-}
-
-#cookie-banner {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background-color: #222;
-    color: white;
-    padding: 1em;
-    text-align: center;
-    z-index: 9999;
-}
-
-#cookie-banner button {
-    margin: 0 1em;
-    padding: 0.5em 1em;
-    background-color: #4CAF50;
-    border: none;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-#cookie-banner button.disallow {
-    background-color: #f44336;
-}
-
     body {
       font-family: Arial, sans-serif;
       margin: 1em;
@@ -151,11 +119,6 @@ body.blocked {
   </style>
 </head>
 <body>
-<div id="cookie-banner">
-    <p>This site uses cookies and storage. Please choose:</p>
-    <button onclick="allowCookies()">Allow</button>
-    <button class="disallow" onclick="disallowCookies()">Disallow</button>
-</div>
 
   <h1>Your Journal</h1>
   <button onclick="location.href= 'tutus.html'">Tutus Version</button>
@@ -318,56 +281,6 @@ body.blocked {
     function toggleDarkMode() {
       document.body.classList.toggle('dark');
     }
-function clearAllCookies() {
-    document.cookie.split(";").forEach(function(cookie) {
-        const name = cookie.trim().split("=")[0];
-        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/";
-    });
-}
-
-function clearStorage() {
-    localStorage.clear();
-    sessionStorage.clear();
-}
-
-function allowCookies() {
-    document.cookie = "cookiesConsent=allow; path=/; max-age=31536000"; // 1 year
-    document.getElementById("cookie-banner").style.display = "none";
-    document.body.classList.remove("blocked");
-
-    // ✅ Load cookie-based scripts here
-    loadCookieScripts();
-}
-
-function disallowCookies() {
-    clearAllCookies();
-    clearStorage();
-    document.cookie = "cookiesConsent=disallow; path=/; max-age=31536000";
-    document.getElementById("cookie-banner").style.display = "none";
-    document.body.classList.remove("blocked");
-}
-
-function loadCookieScripts() {
-    // Example: Load analytics or other cookie-based scripts
-    // Only runs if user allows cookies
-    console.log("Cookies allowed. You can load tracking scripts here.");
-}
-
-window.onload = function() {
-    const cookies = document.cookie;
-    const consentGiven = cookies.includes("cookiesConsent=allow");
-    const consentDenied = cookies.includes("cookiesConsent=disallow");
-
-    if (!consentGiven && !consentDenied) {
-        document.getElementById("cookie-banner").style.display = "block";
-        document.body.classList.add("blocked");
-    } else if (consentGiven) {
-        loadCookieScripts();
-    } else if (consentDenied) {
-        clearAllCookies();
-        clearStorage();
-    }
-};
 
     updateJournalList();
   </script>
